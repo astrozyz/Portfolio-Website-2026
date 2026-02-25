@@ -292,12 +292,18 @@ h3 {
   transition: transform 0.3s, opacity 0.3s;
 }
 
+.menu-toggle .bar:nth-child(2) {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  -webkit-transform: translateZ(0);
+}
+
 .menu-toggle.active .bar:nth-child(1) {
   transform: rotate(45deg) translate(5px, 5px);
 }
 
 .menu-toggle.active .bar:nth-child(2) {
   opacity: 0;
+  visibility: hidden;
   transform: scaleX(0);
 }
 
