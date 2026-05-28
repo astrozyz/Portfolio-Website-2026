@@ -19,6 +19,18 @@
 
 const GAMES = [
   {
+    title: "Build a Marble Slide",
+    thumbnail: "assets/images/game-thumbnails/build-a-marble-slide.png",
+    universeId: 9150975254,
+    placeId: 84907238849255,
+  },
+  {
+    title: "Melee Legends",
+    thumbnail: "assets/images/game-thumbnails/melee-legends.png",
+    universeId: 9991881549,
+    placeId: 92239005601484,
+  },
+  {
     title: "Number Challenge",
     thumbnail: "assets/images/game-thumbnails/eyesight-challenge.png",
     universeId: 9625977424,
