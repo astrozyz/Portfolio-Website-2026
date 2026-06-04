@@ -105,10 +105,23 @@ function renderVideos() {
 async function fetchLiveStats() {
   if (!SITE_CONFIG.workerUrl) return;
 
-  const universeIds = GAMES.map((g) => g.universeId)
-    .filter((id) => id && typeof id === "number");
+  // Showcased games (have cards) + career-extra games (totals only).
+  const extraGames = typeof CAREER_EXTRA !== "undefined" ? CAREER_EXTRA : [];
+  const universeIds = [
+    ...new Set(
+      [...GAMES, ...extraGames]
+        .map((g) => g.universeId)
+        .filter((id) => id && typeof id === "number")
+    ),
+  ];
 
   if (!universeIds.length) return;
+
+  // Caption reflects how many experiences feed the totals (shows immediately).
+  const captionEl = document.getElementById("games-totals-caption");
+  if (captionEl) {
+    captionEl.textContent = `Combined across ${universeIds.length} experiences I've contributed to`;
+  }
 
   try {
     const res = await fetch(
@@ -118,12 +131,25 @@ async function fetchLiveStats() {
     const json = await res.json();
 
     if (json.data) {
+      let totalVisits = 0;
+      let totalPlaying = 0;
+
       json.data.forEach((game) => {
+        totalVisits += game.visits || 0;
+        totalPlaying += game.playing || 0;
+
+        // Per-card stats — only showcased games have these elements.
         const visitsEl = document.getElementById(`visits-${game.id}`);
         const ccuEl = document.getElementById(`ccu-${game.id}`);
         if (visitsEl) visitsEl.textContent = formatNumber(game.visits);
         if (ccuEl) ccuEl.textContent = formatNumber(game.playing);
       });
+
+      // Career totals banner.
+      const totalVisitsEl = document.getElementById("total-visits");
+      const totalPlayingEl = document.getElementById("total-playing");
+      if (totalVisitsEl) totalVisitsEl.textContent = formatNumber(totalVisits);
+      if (totalPlayingEl) totalPlayingEl.textContent = formatNumber(totalPlaying);
     }
   } catch (err) {
     // Silently fail — stats will just show "—"

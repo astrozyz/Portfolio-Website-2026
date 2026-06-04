@@ -593,6 +593,73 @@ h3 {
    GAMES GRID
    ------------------------------------------ */
 
+/* Career totals banner — above the games grid */
+.games-totals {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, var(--accent-glow), rgba(129, 176, 254, 0.02));
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 32px 24px;
+  margin-bottom: 28px;
+}
+
+.games-totals-stats {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 24px 72px;
+}
+
+.games-total {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.games-total-value {
+  font-family: "Fira Code", monospace;
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+}
+
+.games-total-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.games-totals-caption {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: livePulse 2s ease-out infinite;
+}
+
+@keyframes livePulse {
+  0%   { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.5); }
+  70%  { box-shadow: 0 0 0 8px rgba(74, 222, 128, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+}
+
 .games-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -907,6 +974,14 @@ h3 {
 
   .game-stats {
     gap: 16px;
+  }
+
+  .games-totals-stats {
+    gap: 20px 48px;
+  }
+
+  .games-total-value {
+    font-size: 2rem;
   }
 
   .contact-links {

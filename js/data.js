@@ -57,8 +57,8 @@ const GAMES = [
   {
     title: "Infinite Autocorrect",
     thumbnail: "assets/images/game-thumbnails/infinite.png",
-    universeId: 5484026241,
-    placeId: 15859036835,
+    universeId: 1216008237,
+    placeId: 3403470694,
   },
   {
     title: "Stunt Simulator",
@@ -66,6 +66,31 @@ const GAMES = [
     universeId: 5268677200,
     placeId: 15277199491,
   },
+];
+
+/**
+ * ===========================================
+ *  CAREER EXTRA GAMES (counted in totals only)
+ * ===========================================
+ *  Games you've worked on that are NOT shown as cards above, but whose
+ *  visits + live players ARE added to the "Total Visits / Players Online"
+ *  banner above the games grid.
+ *
+ *  TO ADD ONE: paste a new line with the title and universeId. You only
+ *  need the universeId (no thumbnail or placeId, since there's no card).
+ *  Find a game's universeId by opening its Roblox page and calling:
+ *  https://apis.roblox.com/universes/v1/places/<placeId>/universe
+ * ===========================================
+ */
+const CAREER_EXTRA = [
+  { title: "Cake Off", universeId: 6052033819 },
+  { title: "No-Scope Sniping", universeId: 1760106570 },
+  { title: "No-Scope Arcade (original)", universeId: 5147355667 },
+  { title: "Pistol 1v1", universeId: 2540872233 },
+  { title: "What's The Word", universeId: 1613338202 },
+  { title: "Caliber", universeId: 2249804607 },
+  { title: "Oakdale Arena", universeId: 7260705807 },
+  { title: "Paint Drying Tycoon", universeId: 3799945482 },
 ];
 
 const VIDEOS = [

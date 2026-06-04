@@ -1,0 +1,5 @@
+# Local Claude Code tooling (preview/launch config, etc.)
+.claude/
+
+# OS / editor cruft
+.DS_Store
