@@ -262,6 +262,7 @@ function initMeshBackground() {
   const FACET_SWING = 7;           // per-triangle shading range
 
   let width = 0, height = 0, cols = 0, rows = 0;
+  let lastW = 0, lastH = 0;
   let edges = [];
   let facetLayer = null;
 
@@ -275,6 +276,8 @@ function initMeshBackground() {
     width = canvas.clientWidth;
     height = canvas.clientHeight;
     if (!width || !height) return;
+    lastW = width;
+    lastH = height;
     canvas.width = Math.round(width * DPR);
     canvas.height = Math.round(height * DPR);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -389,6 +392,10 @@ function initMeshBackground() {
 
   let resizeTimer = 0;
   window.addEventListener("resize", () => {
+    // Rebuild only when the canvas's own box actually changes. On mobile the
+    // URL bar showing/hiding does NOT change 100lvh, so clientHeight stays put
+    // and the mesh never snaps; real resizes/orientation changes still rebuild.
+    if (canvas.clientWidth === lastW && canvas.clientHeight === lastH) return;
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
       build();
@@ -467,7 +474,24 @@ function initTiltEffect() {
     });
   }
 
-  setTimeout(() => {
+  var tiltApplied = false;
+  function applyAll() {
+    if (tiltApplied) return;
+    tiltApplied = true;
     document.querySelectorAll(".value-card, .sw-column, .expertise-card, .game-card, .games-totals").forEach(applyTilt);
-  }, 1500);
+  }
+
+  // Only enable the mouse-follow tilt when a precise pointer (mouse/trackpad) is
+  // present — PC, or a tablet/iPad with a mouse. Touch-only devices skip it
+  // entirely (hover is broken on touch). Re-checks if a mouse is connected later.
+  var pointerQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+  function checkPointer() {
+    if (pointerQuery.matches) applyAll();
+  }
+  setTimeout(checkPointer, 1500);
+  if (pointerQuery.addEventListener) {
+    pointerQuery.addEventListener("change", checkPointer);
+  } else if (pointerQuery.addListener) {
+    pointerQuery.addListener(checkPointer); // older Safari
+  }
 }

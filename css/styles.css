@@ -71,9 +71,11 @@ body.menu-open {
 /* Ambient triangular mesh background (drawn by initMeshBackground in main.js) */
 #mesh-bg {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 100%;
+  height: 100vh;   /* fallback for older browsers */
+  height: 100lvh;  /* large viewport height — stable, ignores the mobile URL bar */
   z-index: 0;
   pointer-events: none;
   display: block;
@@ -1012,4 +1014,24 @@ h3 {
     justify-content: center;
   }
 
+}
+
+/* ------------------------------------------
+   HOVER EFFECTS ARE MOUSE-ONLY
+   Disabled on touch devices (no mouse) to avoid sticky :hover after taps.
+   The 3D tilt in main.js is likewise gated on a precise pointer. A tablet /
+   iPad WITH a mouse reports (hover: hover) + (pointer: fine), so it keeps them.
+   ------------------------------------------ */
+@media (hover: none), (pointer: coarse) {
+  .value-card:hover,
+  .sw-column:hover,
+  .expertise-card:hover,
+  .game-card:hover,
+  .games-totals:hover {
+    box-shadow: none;
+  }
+
+  .game-card:hover .game-card-image img {
+    transform: none;
+  }
 }
