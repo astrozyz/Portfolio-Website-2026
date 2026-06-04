@@ -3,6 +3,7 @@
    ========================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
+  initMeshBackground();
   renderGames();
   renderVideos();
   initNavbar();
@@ -237,6 +238,168 @@ function initSmoothScroll() {
 }
 
 /* ------------------------------------------
+   MESH BACKGROUND — ambient pulsing triangular network
+   (inspired by the BMW Vision Next 100 faceted skin)
+   ------------------------------------------ */
+
+function initMeshBackground() {
+  const canvas = document.getElementById("mesh-bg");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const CELL = 92;        // triangle size in px (larger = sparser)
+  const JITTER = 0.32;    // mesh irregularity (0 = perfect grid)
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const BUCKETS = 16;     // brightness levels for batched seam strokes
+
+  // Colors sampled around --bg-primary so the mesh blends into the page
+  const BASE = [18, 18, 18];       // page background (#121212)
+  const SEAM_LOW = [23, 24, 28];   // resting seam (very faint — just above background)
+  const SEAM_HIGH = [40, 43, 52];  // seam at pulse peak (faint cool tint)
+  const FACET_SWING = 7;           // per-triangle shading range
+
+  let width = 0, height = 0, cols = 0, rows = 0;
+  let edges = [];
+  let facetLayer = null;
+
+  const clamp = (v) => (v < 0 ? 0 : v > 255 ? 255 : v);
+  const rand = (x, y) => {
+    const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+    return n - Math.floor(n);
+  };
+
+  function build() {
+    width = canvas.clientWidth;
+    height = canvas.clientHeight;
+    if (!width || !height) return;
+    canvas.width = Math.round(width * DPR);
+    canvas.height = Math.round(height * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    cols = Math.ceil(width / CELL) + 2;
+    rows = Math.ceil(height / CELL) + 2;
+
+    // Jittered point grid with one cell of bleed on every side
+    const pts = [];
+    for (let j = 0; j <= rows; j++) {
+      const row = [];
+      for (let i = 0; i <= cols; i++) {
+        const onEdge = i === 0 || j === 0 || i === cols || j === rows;
+        const jx = onEdge ? 0 : (rand(i, j) - 0.5) * 2 * JITTER * CELL;
+        const jy = onEdge ? 0 : (rand(i + 99, j + 17) - 0.5) * 2 * JITTER * CELL;
+        row.push({ x: (i - 1) * CELL + jx, y: (j - 1) * CELL + jy });
+      }
+      pts.push(row);
+    }
+
+    // Static facet layer — rendered once, then blitted each frame
+    facetLayer = document.createElement("canvas");
+    facetLayer.width = canvas.width;
+    facetLayer.height = canvas.height;
+    const fctx = facetLayer.getContext("2d");
+    fctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    fctx.fillStyle = `rgb(${BASE[0]},${BASE[1]},${BASE[2]})`;
+    fctx.fillRect(0, 0, width, height);
+
+    const fillTri = (p, q, r, shade) => {
+      const v = Math.round(FACET_SWING * (shade - 0.5));
+      fctx.fillStyle = `rgb(${clamp(BASE[0] + v)},${clamp(BASE[1] + v)},${clamp(BASE[2] + v)})`;
+      fctx.beginPath();
+      fctx.moveTo(p.x, p.y);
+      fctx.lineTo(q.x, q.y);
+      fctx.lineTo(r.x, r.y);
+      fctx.closePath();
+      fctx.fill();
+    };
+
+    // Triangles (2 per cell, alternating diagonal for an interlocked look)
+    // + de-duped seam edges with precomputed midpoints
+    edges = [];
+    const seen = new Set();
+    const addEdge = (a, b) => {
+      const key = a.x <= b.x
+        ? `${a.x.toFixed(1)},${a.y.toFixed(1)}|${b.x.toFixed(1)},${b.y.toFixed(1)}`
+        : `${b.x.toFixed(1)},${b.y.toFixed(1)}|${a.x.toFixed(1)},${a.y.toFixed(1)}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      edges.push({ ax: a.x, ay: a.y, bx: b.x, by: b.y, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 });
+    };
+
+    for (let j = 0; j < rows; j++) {
+      for (let i = 0; i < cols; i++) {
+        const a = pts[j][i], b = pts[j][i + 1], c = pts[j + 1][i], d = pts[j + 1][i + 1];
+        let t1, t2;
+        if ((i + j) % 2 === 0) { t1 = [a, b, d]; t2 = [a, d, c]; }
+        else { t1 = [a, b, c]; t2 = [b, d, c]; }
+        fillTri(t1[0], t1[1], t1[2], rand(i * 2 + 3, j * 2 + 5));
+        fillTri(t2[0], t2[1], t2[2], rand(i * 2 + 7, j * 2 + 1));
+        addEdge(t1[0], t1[1]); addEdge(t1[1], t1[2]); addEdge(t1[2], t1[0]);
+        addEdge(t2[0], t2[1]); addEdge(t2[1], t2[2]); addEdge(t2[2], t2[0]);
+      }
+    }
+  }
+
+  function draw(t) {
+    if (!facetLayer) return;
+    ctx.drawImage(facetLayer, 0, 0, width, height);
+    ctx.lineWidth = 1;
+
+    // Two slow, long-wavelength diagonal waves → organic shimmer (not stripes)
+    const buckets = Array.from({ length: BUCKETS }, () => new Path2D());
+    for (const e of edges) {
+      const w1 = Math.sin(e.mx * 0.0041 + e.my * 0.0059 - t * 0.00060);
+      const w2 = Math.sin(e.mx * -0.0055 + e.my * 0.0033 - t * 0.00042);
+      let pulse = (w1 + w2) * 0.25 + 0.5;       // 0..1
+      pulse = pulse * pulse * (3 - 2 * pulse);   // smoothstep for a softer pulse
+      const bi = Math.min(BUCKETS - 1, Math.max(0, (pulse * (BUCKETS - 1)) | 0));
+      buckets[bi].moveTo(e.ax, e.ay);
+      buckets[bi].lineTo(e.bx, e.by);
+    }
+    for (let bi = 0; bi < BUCKETS; bi++) {
+      const k = bi / (BUCKETS - 1);
+      const r = Math.round(SEAM_LOW[0] + (SEAM_HIGH[0] - SEAM_LOW[0]) * k);
+      const g = Math.round(SEAM_LOW[1] + (SEAM_HIGH[1] - SEAM_LOW[1]) * k);
+      const b = Math.round(SEAM_LOW[2] + (SEAM_HIGH[2] - SEAM_LOW[2]) * k);
+      ctx.strokeStyle = `rgb(${r},${g},${b})`;
+      ctx.stroke(buckets[bi]);
+    }
+  }
+
+  let rafId = 0;
+  let last = 0;
+  const FRAME_MS = 1000 / 30; // gentle 30fps cap for a background layer
+
+  function loop(now) {
+    rafId = requestAnimationFrame(loop);
+    if (now - last < FRAME_MS) return;
+    last = now;
+    draw(now);
+  }
+
+  function start() {
+    build();
+    if (reduceMotion) { draw(0); return; } // single static render, no animation
+    cancelAnimationFrame(rafId);
+    last = 0;
+    rafId = requestAnimationFrame(loop);
+  }
+
+  let resizeTimer = 0;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      build();
+      if (reduceMotion) draw(0);
+    }, 200);
+  });
+
+  start();
+}
+
+/* ------------------------------------------
    PARALLAX GLOW ORBS
    ------------------------------------------ */
 
@@ -273,6 +436,7 @@ function initTiltEffect() {
     "sw-column":      { rotate: 4, scale: 1.02 },
     "expertise-card": { rotate: 4, scale: 1.02 },
     "game-card":      { rotate: 2, scale: 1.01 },
+    "games-totals":   { rotate: 2, scale: 1.01 },
   };
 
   function applyTilt(el) {
@@ -280,6 +444,7 @@ function initTiltEffect() {
     if (el.classList.contains("sw-column")) cfg = tiltConfig["sw-column"];
     if (el.classList.contains("expertise-card")) cfg = tiltConfig["expertise-card"];
     if (el.classList.contains("game-card")) cfg = tiltConfig["game-card"];
+    if (el.classList.contains("games-totals")) cfg = tiltConfig["games-totals"];
 
     el.removeAttribute("data-aos");
     el.removeAttribute("data-aos-delay");
@@ -303,6 +468,6 @@ function initTiltEffect() {
   }
 
   setTimeout(() => {
-    document.querySelectorAll(".value-card, .sw-column, .expertise-card, .game-card").forEach(applyTilt);
+    document.querySelectorAll(".value-card, .sw-column, .expertise-card, .game-card, .games-totals").forEach(applyTilt);
   }, 1500);
 }
