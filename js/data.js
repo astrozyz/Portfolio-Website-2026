@@ -25,10 +25,10 @@ const GAMES = [
     placeId: 84907238849255,
   },
   {
-    title: "Melee Legends",
-    thumbnail: "assets/images/game-thumbnails/melee-legends.png",
-    universeId: 9991881549,
-    placeId: 92239005601484,
+    title: "+1 Squish a Dumpling Escape!",
+    thumbnail: "assets/images/game-thumbnails/squish-a-dumpling.png",
+    universeId: 10232360448,
+    placeId: 135807790398223,
   },
   {
     title: "Number Challenge",
