@@ -19,6 +19,12 @@
 
 const GAMES = [
   {
+    title: "Merge an Army!",
+    thumbnail: "assets/images/game-thumbnails/merge-an-army.png",
+    universeId: 10343066311,
+    placeId: 109274213361590,
+  },
+  {
     title: "Build a Marble Slide",
     thumbnail: "assets/images/game-thumbnails/build-a-marble-slide.png",
     universeId: 9150975254,
